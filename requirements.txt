@@ -1,0 +1,9 @@
+# CLOUDRANGE runtime + test dependencies.
+#
+# Mock mode (the offline default) needs only jsonschema (SARIF validation).
+# boto3 is required for --real mode against a deployed range. pytest is for the
+# test suite. The privesc graph + BFS are implemented in-house -- no graph lib.
+
+boto3>=1.34          # real-mode AWS enumeration / attack
+jsonschema>=4.0      # offline SARIF 2.1.0 validation
+pytest>=7.0          # test suite

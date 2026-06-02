@@ -1,0 +1,10 @@
+# Ship the data dirs, terraform, tests and docs in the source distribution so a
+# clone/sdist is complete. (Runtime resolution uses cloudrange._locate_data,
+# which finds these at the repo root for source/editable installs.)
+include LICENSE README.md requirements.txt Makefile Dockerfile pyproject.toml
+recursive-include fixtures *.json
+recursive-include schemas *.json
+recursive-include terraform *.tf *.md
+recursive-include terraform-hardened *.md
+recursive-include tests *.py
+recursive-include docs *

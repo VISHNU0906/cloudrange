@@ -1,0 +1,232 @@
+{
+  "account_id": "123456789012",
+  "_comment": "Deliberately-vulnerable fixture. Mirrors what terraform/main.tf would create (same principal names). Contains 4 distinct IAM privesc paths plus lateral-movement and exfil misconfigs. Used by CLOUDRANGE --mock so privesc/attack/detect run fully offline.",
+
+  "users": {
+    "admin": {
+      "arn": "arn:aws:iam::123456789012:user/admin",
+      "comment": "Break-glass admin user. Holds AdministratorAccess. This is the privesc SINK that attack paths reach.",
+      "attached_managed": ["arn:aws:iam::aws:policy/AdministratorAccess"],
+      "inline_policies": {},
+      "groups": [],
+      "tags": {"role": "break-glass"}
+    },
+
+    "analyst": {
+      "arn": "arn:aws:iam::123456789012:user/analyst",
+      "comment": "PATH 1 START. Read-only-ish user, but over-permissive inline policy grants iam:CreateAccessKey on ANY user -> can mint creds for admin.",
+      "attached_managed": ["arn:aws:iam::aws:policy/ReadOnlyAccess"],
+      "inline_policies": {
+        "analyst-extra": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "OverpermissiveKeyMgmt",
+              "Effect": "Allow",
+              "Action": ["iam:CreateAccessKey", "iam:ListAccessKeys", "iam:GetUser", "iam:ListUsers"],
+              "Resource": "*"
+            }
+          ]
+        }
+      },
+      "groups": [],
+      "tags": {"team": "data"}
+    },
+
+    "ci-deployer": {
+      "arn": "arn:aws:iam::123456789012:user/ci-deployer",
+      "comment": "PATH 2 START. CI user that can pass roles to Lambda and create/invoke functions. iam:PassRole on lambda-admin-role + lambda:CreateFunction/InvokeFunction -> run code as an admin role.",
+      "attached_managed": [],
+      "inline_policies": {
+        "ci-deploy": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "LambdaDeploy",
+              "Effect": "Allow",
+              "Action": [
+                "lambda:CreateFunction",
+                "lambda:InvokeFunction",
+                "lambda:UpdateFunctionCode",
+                "lambda:GetFunction",
+                "lambda:ListFunctions",
+                "iam:PassRole"
+              ],
+              "Resource": "*"
+            }
+          ]
+        }
+      },
+      "groups": [],
+      "tags": {"team": "platform"}
+    },
+
+    "dev-deployer": {
+      "arn": "arn:aws:iam::123456789012:user/dev-deployer",
+      "comment": "PATH 3 START. Self-escalation: iam:PutUserPolicy on self -> attach an inline admin policy to own user.",
+      "attached_managed": [],
+      "inline_policies": {
+        "dev-self": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "SelfPolicyWrite",
+              "Effect": "Allow",
+              "Action": ["iam:PutUserPolicy", "iam:GetUser"],
+              "Resource": "arn:aws:iam::123456789012:user/dev-deployer"
+            }
+          ]
+        }
+      },
+      "groups": [],
+      "tags": {"team": "dev"}
+    },
+
+    "support": {
+      "arn": "arn:aws:iam::123456789012:user/support",
+      "comment": "PATH 4 START. iam:AttachUserPolicy on self with no resource restriction -> attach the managed AdministratorAccess policy.",
+      "attached_managed": ["arn:aws:iam::aws:policy/ReadOnlyAccess"],
+      "inline_policies": {
+        "support-attach": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "AttachAnything",
+              "Effect": "Allow",
+              "Action": ["iam:AttachUserPolicy", "iam:ListAttachedUserPolicies"],
+              "Resource": "*"
+            }
+          ]
+        }
+      },
+      "groups": [],
+      "tags": {"team": "support"}
+    },
+
+    "intern": {
+      "arn": "arn:aws:iam::123456789012:user/intern",
+      "comment": "Genuinely low-privilege user with NO privesc path. Proves the analyzer does not produce false positives.",
+      "attached_managed": [],
+      "inline_policies": {
+        "intern-ro": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "JustS3List",
+              "Effect": "Allow",
+              "Action": ["s3:ListBucket", "s3:GetObject"],
+              "Resource": "arn:aws:s3:::cloudrange-public-assets/*"
+            }
+          ]
+        }
+      },
+      "groups": [],
+      "tags": {"team": "intern"}
+    }
+  },
+
+  "roles": {
+    "lambda-admin-role": {
+      "arn": "arn:aws:iam::123456789012:role/lambda-admin-role",
+      "comment": "PATH 2 SINK ROLE. Over-privileged Lambda execution role holding AdministratorAccess. Trusts lambda.amazonaws.com -> ci-deployer can pass it to a Lambda and run admin code.",
+      "attached_managed": ["arn:aws:iam::aws:policy/AdministratorAccess"],
+      "inline_policies": {},
+      "trust": ["lambda.amazonaws.com"],
+      "tags": {"managed_by": "platform"}
+    },
+
+    "ec2-app-role": {
+      "arn": "arn:aws:iam::123456789012:role/ec2-app-role",
+      "comment": "PATH 5 START (lateral movement). Role attached to the web EC2 instance (reachable via IMDSv1 SSRF). Can read the crown-jewel bucket and assume the (non-admin) automation-role, beginning a genuine 2-hop escalation chain.",
+      "attached_managed": [],
+      "inline_policies": {
+        "ec2-app": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "ReadCrownJewels",
+              "Effect": "Allow",
+              "Action": ["s3:GetObject", "s3:ListBucket"],
+              "Resource": [
+                "arn:aws:s3:::cloudrange-crown-jewels",
+                "arn:aws:s3:::cloudrange-crown-jewels/*"
+              ]
+            },
+            {
+              "Sid": "AssumeAutomation",
+              "Effect": "Allow",
+              "Action": ["sts:AssumeRole"],
+              "Resource": "arn:aws:iam::123456789012:role/automation-role"
+            }
+          ]
+        }
+      },
+      "trust": ["ec2.amazonaws.com"],
+      "tags": {"attached_to": "web-server"}
+    },
+
+    "automation-role": {
+      "arn": "arn:aws:iam::123456789012:role/automation-role",
+      "comment": "PATH 5 INTERMEDIATE (NOT admin). A genuine multi-hop pivot: ec2-app-role assumes THIS role, which is itself only mid-privileged but can iam:PassRole + invoke Lambda with the admin lambda-admin-role. So reachability is: ec2-app-role -> AssumeRole -> automation-role -> PassRole+Lambda -> ADMIN. This forces the BFS to traverse two hops; no single edge reaches admin.",
+      "attached_managed": [],
+      "inline_policies": {
+        "automation-lambda": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "DeployViaLambda",
+              "Effect": "Allow",
+              "Action": [
+                "lambda:CreateFunction",
+                "lambda:InvokeFunction",
+                "lambda:GetFunction",
+                "iam:PassRole"
+              ],
+              "Resource": "*"
+            }
+          ]
+        }
+      },
+      "trust": ["arn:aws:iam::123456789012:role/ec2-app-role"],
+      "tags": {"managed_by": "automation"}
+    }
+  },
+
+  "groups": {},
+
+  "buckets": {
+    "cloudrange-public-assets": {
+      "public": true,
+      "public_reason": "Bucket ACL grants READ to AllUsers (public-read) and block-public-access is disabled.",
+      "crown_jewel": false,
+      "encryption": false,
+      "objects": ["logo.png", "index.html"]
+    },
+    "cloudrange-crown-jewels": {
+      "public": false,
+      "crown_jewel": true,
+      "encryption": true,
+      "objects": ["customer-pii.csv", "prod-db-dump.sql", "secrets/master.key"],
+      "comment": "The crown-jewel data. The attack chain reaches admin, then reads these objects (exfil)."
+    }
+  },
+
+  "instances": {
+    "i-0web0server0range": {
+      "attached_role": "ec2-app-role",
+      "imds_v1": true,
+      "public_ip": "203.0.113.42",
+      "user_data": "#!/bin/bash\nexport DB_PASSWORD=SuperSecretP@ss123\nexport API_TOKEN=cr_live_8f3a2b1c9d4e5f6a\naws s3 cp s3://cloudrange-crown-jewels/prod-db-dump.sql /tmp/",
+      "comment": "Web server. IMDSv1 enabled (token-less metadata) + secrets baked into user-data."
+    }
+  },
+
+  "functions": {
+    "report-generator": {
+      "execution_role": "lambda-admin-role",
+      "runtime": "python3.11",
+      "env": {"REPORT_BUCKET": "cloudrange-public-assets"},
+      "comment": "Existing over-privileged Lambda using the admin execution role. Demonstrates the blast radius of lambda-admin-role even before the attack."
+    }
+  }
+}

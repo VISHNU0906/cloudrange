@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cloudrange"
+version = "1.0.0"
+description = "Cloud attack-and-detect range: Terraform vuln AWS env + boto3 IAM-privesc attack chain + read-only auditor (SARIF/Markdown)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Vishnu Kosuri" }]
+keywords = ["aws", "iam", "privilege-escalation", "cloud-security", "sarif", "pentest"]
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Security",
+]
+dependencies = [
+  "boto3>=1.34",
+  "jsonschema>=4.0",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7.0"]
+
+[project.scripts]
+cloudrange = "cloudrange.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/VISHNU0906/cloudrange"
+
+[tool.setuptools]
+packages = ["cloudrange"]
+
+[tool.setuptools.package-data]
+cloudrange = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

@@ -1,0 +1,126 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cloudrange.local/schemas/sarif-2.1.0-subset.schema.json",
+  "title": "SARIF 2.1.0 (CLOUDRANGE validating subset)",
+  "description": "A focused subset of the SARIF v2.1.0 schema covering the structures CLOUDRANGE emits (runs, tool.driver.rules, results with logicalLocations and levels). Bundled so SARIF output is validated fully offline.",
+  "type": "object",
+  "required": ["version", "runs"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "enum": ["2.1.0"]
+    },
+    "$schema": {"type": "string"},
+    "runs": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/run"}
+    }
+  },
+  "additionalProperties": true,
+  "definitions": {
+    "run": {
+      "type": "object",
+      "required": ["tool", "results"],
+      "properties": {
+        "tool": {"$ref": "#/definitions/tool"},
+        "results": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/result"}
+        },
+        "columnKind": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "tool": {
+      "type": "object",
+      "required": ["driver"],
+      "properties": {
+        "driver": {"$ref": "#/definitions/toolComponent"}
+      },
+      "additionalProperties": true
+    },
+    "toolComponent": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {"type": "string"},
+        "version": {"type": "string"},
+        "informationUri": {"type": "string"},
+        "rules": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/reportingDescriptor"}
+        }
+      },
+      "additionalProperties": true
+    },
+    "reportingDescriptor": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {"type": "string"},
+        "name": {"type": "string"},
+        "shortDescription": {"$ref": "#/definitions/message"},
+        "fullDescription": {"$ref": "#/definitions/message"},
+        "helpUri": {"type": "string"},
+        "help": {"$ref": "#/definitions/message"},
+        "defaultConfiguration": {
+          "type": "object",
+          "properties": {
+            "level": {"$ref": "#/definitions/level"}
+          },
+          "additionalProperties": true
+        },
+        "properties": {"type": "object"}
+      },
+      "additionalProperties": true
+    },
+    "result": {
+      "type": "object",
+      "required": ["ruleId", "message"],
+      "properties": {
+        "ruleId": {"type": "string"},
+        "ruleIndex": {"type": "integer"},
+        "level": {"$ref": "#/definitions/level"},
+        "message": {"$ref": "#/definitions/message"},
+        "locations": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/location"}
+        },
+        "properties": {"type": "object"}
+      },
+      "additionalProperties": true
+    },
+    "location": {
+      "type": "object",
+      "properties": {
+        "logicalLocations": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/logicalLocation"}
+        },
+        "message": {"$ref": "#/definitions/message"}
+      },
+      "additionalProperties": true
+    },
+    "logicalLocation": {
+      "type": "object",
+      "properties": {
+        "name": {"type": "string"},
+        "fullyQualifiedName": {"type": "string"},
+        "kind": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "message": {
+      "type": "object",
+      "properties": {
+        "text": {"type": "string"},
+        "markdown": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "level": {
+      "type": "string",
+      "enum": ["none", "note", "warning", "error"]
+    }
+  }
+}

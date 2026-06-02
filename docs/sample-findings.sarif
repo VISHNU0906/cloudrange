@@ -1,0 +1,772 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "CLOUDRANGE",
+          "version": "1.0.0",
+          "informationUri": "https://github.com/VISHNU0906/cloudrange",
+          "rules": [
+            {
+              "id": "CR-IAM-PRIVESC",
+              "name": "IamPrivilegeEscalationPath",
+              "shortDescription": {
+                "text": "Principal can escalate to administrator access."
+              },
+              "fullDescription": {
+                "text": "The principal holds a permission (or chain of permissions) that allows it to obtain administrator-equivalent access via a known IAM privilege-escalation technique."
+              },
+              "helpUri": "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "CR-IAM-CREATEKEY",
+              "name": "OverpermissiveCreateAccessKey",
+              "shortDescription": {
+                "text": "iam:CreateAccessKey allowed on other users."
+              },
+              "fullDescription": {
+                "text": "A principal can create access keys for IAM users other than itself, letting it impersonate them."
+              },
+              "helpUri": "https://github.com/VISHNU0906/cloudrange",
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "CR-IAM-PASSROLE",
+              "name": "PassRoleToCompute",
+              "shortDescription": {
+                "text": "iam:PassRole with compute create/invoke."
+              },
+              "fullDescription": {
+                "text": "A principal can pass an over-privileged role to a compute service (Lambda/EC2) and execute code with that role's permissions."
+              },
+              "helpUri": "https://github.com/VISHNU0906/cloudrange",
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "CR-IAM-SELFPOLICY",
+              "name": "SelfPolicyModification",
+              "shortDescription": {
+                "text": "Principal can modify its own (or others') IAM policy."
+              },
+              "fullDescription": {
+                "text": "iam:PutUserPolicy / iam:AttachUserPolicy allow a principal to grant itself administrator access."
+              },
+              "helpUri": "https://github.com/VISHNU0906/cloudrange",
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "CR-IAM-ADMINROLE",
+              "name": "OverPrivilegedRole",
+              "shortDescription": {
+                "text": "Role holds AdministratorAccess."
+              },
+              "fullDescription": {
+                "text": "A service or instance role is granted administrator access, creating a large blast radius if the role is assumed or its compute is compromised."
+              },
+              "helpUri": "https://github.com/VISHNU0906/cloudrange",
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "CR-IAM-TRUST",
+              "name": "OverBroadAssumeRoleTrust",
+              "shortDescription": {
+                "text": "Role trust policy is over-broad."
+              },
+              "fullDescription": {
+                "text": "A role trusts another principal/account-root, enabling lateral movement via sts:AssumeRole."
+              },
+              "helpUri": "https://github.com/VISHNU0906/cloudrange",
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            },
+            {
+              "id": "CR-S3-PUBLIC",
+              "name": "PublicS3Bucket",
+              "shortDescription": {
+                "text": "S3 bucket is publicly accessible."
+              },
+              "fullDescription": {
+                "text": "Block Public Access is disabled or an ACL/policy grants public access."
+              },
+              "helpUri": "https://github.com/VISHNU0906/cloudrange",
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "CR-S3-NOENC",
+              "name": "S3BucketUnencrypted",
+              "shortDescription": {
+                "text": "S3 bucket has no default encryption."
+              },
+              "fullDescription": {
+                "text": "Default server-side encryption is not enabled on the bucket."
+              },
+              "helpUri": "https://github.com/VISHNU0906/cloudrange",
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            },
+            {
+              "id": "CR-EC2-IMDSV1",
+              "name": "Imdsv1Enabled",
+              "shortDescription": {
+                "text": "EC2 instance allows token-less IMDSv1."
+              },
+              "fullDescription": {
+                "text": "IMDSv1 lets an SSRF or on-host attacker read the instance role's credentials without a session token."
+              },
+              "helpUri": "https://github.com/VISHNU0906/cloudrange",
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "CR-EC2-SECRETS",
+              "name": "SecretsInUserData",
+              "shortDescription": {
+                "text": "Secrets baked into EC2 user-data."
+              },
+              "fullDescription": {
+                "text": "Plaintext credentials/tokens in user-data are readable by anyone who can describe the instance or reach the metadata service."
+              },
+              "helpUri": "https://github.com/VISHNU0906/cloudrange",
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "CR-LAMBDA-ADMIN",
+              "name": "OverPrivilegedLambda",
+              "shortDescription": {
+                "text": "Lambda function uses an admin execution role."
+              },
+              "fullDescription": {
+                "text": "A function runs with an administrator-equivalent execution role."
+              },
+              "helpUri": "https://github.com/VISHNU0906/cloudrange",
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            }
+          ]
+        }
+      },
+      "columnKind": "utf16CodeUnits",
+      "results": [
+        {
+          "ruleId": "CR-IAM-PRIVESC",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Principal 'analyst' can escalate to administrator in 1 step(s) via CreateAccessKey.  [privesc path: analyst  ->  ADMIN]"
+          },
+          "locations": [
+            {
+              "logicalLocations": [
+                {
+                  "name": "analyst",
+                  "fullyQualifiedName": "arn:aws:iam::123456789012:user/analyst",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "severity": "CRITICAL",
+            "remediation": "Remove the escalation permission(s) from this principal and apply least privilege. See the linked privesc path.",
+            "privescPath": "analyst  ->  ADMIN",
+            "technique": "CreateAccessKey",
+            "path_techniques": [
+              "CreateAccessKey"
+            ],
+            "path_length": 1
+          }
+        },
+        {
+          "ruleId": "CR-IAM-PRIVESC",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Principal 'automation-role' can escalate to administrator in 1 step(s) via PassRole+Lambda.  [privesc path: automation-role  ->  ADMIN]"
+          },
+          "locations": [
+            {
+              "logicalLocations": [
+                {
+                  "name": "automation-role",
+                  "fullyQualifiedName": "arn:aws:iam::123456789012:role/automation-role",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "severity": "CRITICAL",
+            "remediation": "Remove the escalation permission(s) from this principal and apply least privilege. See the linked privesc path.",
+            "privescPath": "automation-role  ->  ADMIN",
+            "technique": "PassRole+Lambda",
+            "path_techniques": [
+              "PassRole+Lambda"
+            ],
+            "path_length": 1
+          }
+        },
+        {
+          "ruleId": "CR-IAM-PRIVESC",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Principal 'ci-deployer' can escalate to administrator in 1 step(s) via PassRole+Lambda.  [privesc path: ci-deployer  ->  ADMIN]"
+          },
+          "locations": [
+            {
+              "logicalLocations": [
+                {
+                  "name": "ci-deployer",
+                  "fullyQualifiedName": "arn:aws:iam::123456789012:user/ci-deployer",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "severity": "CRITICAL",
+            "remediation": "Remove the escalation permission(s) from this principal and apply least privilege. See the linked privesc path.",
+            "privescPath": "ci-deployer  ->  ADMIN",
+            "technique": "PassRole+Lambda",
+            "path_techniques": [
+              "PassRole+Lambda"
+            ],
+            "path_length": 1
+          }
+        },
+        {
+          "ruleId": "CR-IAM-PRIVESC",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Principal 'dev-deployer' can escalate to administrator in 1 step(s) via PutUserPolicy.  [privesc path: dev-deployer  ->  ADMIN]"
+          },
+          "locations": [
+            {
+              "logicalLocations": [
+                {
+                  "name": "dev-deployer",
+                  "fullyQualifiedName": "arn:aws:iam::123456789012:user/dev-deployer",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "severity": "CRITICAL",
+            "remediation": "Remove the escalation permission(s) from this principal and apply least privilege. See the linked privesc path.",
+            "privescPath": "dev-deployer  ->  ADMIN",
+            "technique": "PutUserPolicy",
+            "path_techniques": [
+              "PutUserPolicy"
+            ],
+            "path_length": 1
+          }
+        },
+        {
+          "ruleId": "CR-IAM-PRIVESC",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Principal 'ec2-app-role' can escalate to administrator in 2 step(s) via AssumeRole -> PassRole+Lambda.  [privesc path: ec2-app-role  ->  automation-role  ->  ADMIN]"
+          },
+          "locations": [
+            {
+              "logicalLocations": [
+                {
+                  "name": "ec2-app-role",
+                  "fullyQualifiedName": "arn:aws:iam::123456789012:role/ec2-app-role",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "severity": "CRITICAL",
+            "remediation": "Remove the escalation permission(s) from this principal and apply least privilege. See the linked privesc path.",
+            "privescPath": "ec2-app-role  ->  automation-role  ->  ADMIN",
+            "technique": "AssumeRole -> PassRole+Lambda",
+            "path_techniques": [
+              "AssumeRole",
+              "PassRole+Lambda"
+            ],
+            "path_length": 2
+          }
+        },
+        {
+          "ruleId": "CR-IAM-PRIVESC",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Principal 'support' can escalate to administrator in 1 step(s) via AttachUserPolicy.  [privesc path: support  ->  ADMIN]"
+          },
+          "locations": [
+            {
+              "logicalLocations": [
+                {
+                  "name": "support",
+                  "fullyQualifiedName": "arn:aws:iam::123456789012:user/support",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "severity": "CRITICAL",
+            "remediation": "Remove the escalation permission(s) from this principal and apply least privilege. See the linked privesc path.",
+            "privescPath": "support  ->  ADMIN",
+            "technique": "AttachUserPolicy",
+            "path_techniques": [
+              "AttachUserPolicy"
+            ],
+            "path_length": 1
+          }
+        },
+        {
+          "ruleId": "CR-IAM-CREATEKEY",
+          "ruleIndex": 1,
+          "level": "error",
+          "message": {
+            "text": "Principal 'analyst' has iam:CreateAccessKey enabling technique 'CreateAccessKey': Call iam:CreateAccessKey for user 'admin', obtaining valid long-lived credentials for that principal and inheriting all of its permissions.  [privesc path: analyst  ->  ADMIN]"
+          },
+          "locations": [
+            {
+              "logicalLocations": [
+                {
+                  "name": "analyst",
+                  "fullyQualifiedName": "arn:aws:iam::123456789012:user/analyst",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "severity": "CRITICAL",
+            "remediation": "Scope iam:CreateAccessKey to the principal's own user ARN, or remove it. Never allow it on Resource '*'.",
+            "privescPath": "analyst  ->  ADMIN",
+            "technique": "CreateAccessKey",
+            "permissions": [
+              "iam:CreateAccessKey"
+            ]
+          }
+        },
+        {
+          "ruleId": "CR-IAM-CREATEKEY",
+          "ruleIndex": 1,
+          "level": "error",
+          "message": {
+            "text": "Principal 'analyst' has iam:CreateAccessKey enabling technique 'CreateAccessKey': Call iam:CreateAccessKey for user 'ci-deployer', obtaining valid long-lived credentials for that principal and inheriting all of its permissions.  [privesc path: analyst  ->  ADMIN]"
+          },
+          "locations": [
+            {
+              "logicalLocations": [
+                {
+                  "name": "analyst",
+                  "fullyQualifiedName": "arn:aws:iam::123456789012:user/analyst",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "severity": "HIGH",
+            "remediation": "Scope iam:CreateAccessKey to the principal's own user ARN, or remove it. Never allow it on Resource '*'.",
+            "privescPath": "analyst  ->  ADMIN",
+            "technique": "CreateAccessKey",
+            "permissions": [
+              "iam:CreateAccessKey"
+            ]
+          }
+        },
+        {
+          "ruleId": "CR-IAM-CREATEKEY",
+          "ruleIndex": 1,
+          "level": "error",
+          "message": {
+            "text": "Principal 'analyst' has iam:CreateAccessKey enabling technique 'CreateAccessKey': Call iam:CreateAccessKey for user 'dev-deployer', obtaining valid long-lived credentials for that principal and inheriting all of its permissions.  [privesc path: analyst  ->  ADMIN]"
+          },
+          "locations": [
+            {
+              "logicalLocations": [
+                {
+                  "name": "analyst",
+                  "fullyQualifiedName": "arn:aws:iam::123456789012:user/analyst",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "severity": "HIGH",
+            "remediation": "Scope iam:CreateAccessKey to the principal's own user ARN, or remove it. Never allow it on Resource '*'.",
+            "privescPath": "analyst  ->  ADMIN",
+            "technique": "CreateAccessKey",
+            "permissions": [
+              "iam:CreateAccessKey"
+            ]
+          }
+        },
+        {
+          "ruleId": "CR-IAM-CREATEKEY",
+          "ruleIndex": 1,
+          "level": "error",
+          "message": {
+            "text": "Principal 'analyst' has iam:CreateAccessKey enabling technique 'CreateAccessKey': Call iam:CreateAccessKey for user 'support', obtaining valid long-lived credentials for that principal and inheriting all of its permissions.  [privesc path: analyst  ->  ADMIN]"
+          },
+          "locations": [
+            {
+              "logicalLocations": [
+                {
+                  "name": "analyst",
+                  "fullyQualifiedName": "arn:aws:iam::123456789012:user/analyst",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "severity": "HIGH",
+            "remediation": "Scope iam:CreateAccessKey to the principal's own user ARN, or remove it. Never allow it on Resource '*'.",
+            "privescPath": "analyst  ->  ADMIN",
+            "technique": "CreateAccessKey",
+            "permissions": [
+              "iam:CreateAccessKey"
+            ]
+          }
+        },
+        {
+          "ruleId": "CR-IAM-CREATEKEY",
+          "ruleIndex": 1,
+          "level": "error",
+          "message": {
+            "text": "Principal 'analyst' has iam:CreateAccessKey enabling technique 'CreateAccessKey': Call iam:CreateAccessKey for user 'intern', obtaining valid long-lived credentials for that principal and inheriting all of its permissions.  [privesc path: analyst  ->  ADMIN]"
+          },
+          "locations": [
+            {
+              "logicalLocations": [
+                {
+                  "name": "analyst",
+                  "fullyQualifiedName": "arn:aws:iam::123456789012:user/analyst",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "severity": "HIGH",
+            "remediation": "Scope iam:CreateAccessKey to the principal's own user ARN, or remove it. Never allow it on Resource '*'.",
+            "privescPath": "analyst  ->  ADMIN",
+            "technique": "CreateAccessKey",
+            "permissions": [
+              "iam:CreateAccessKey"
+            ]
+          }
+        },
+        {
+          "ruleId": "CR-IAM-PASSROLE",
+          "ruleIndex": 2,
+          "level": "error",
+          "message": {
+            "text": "Principal 'ci-deployer' has iam:PassRole, lambda:CreateFunction, lambda:InvokeFunction enabling technique 'PassRole+Lambda': Create a Lambda function with execution role 'lambda-admin-role' (PassRole), then invoke it to run arbitrary code with that role's permissions.  [privesc path: ci-deployer  ->  ADMIN]"
+          },
+          "locations": [
+            {
+              "logicalLocations": [
+                {
+                  "name": "ci-deployer",
+                  "fullyQualifiedName": "arn:aws:iam::123456789012:user/ci-deployer",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "severity": "CRITICAL",
+            "remediation": "Constrain iam:PassRole to a specific, least-privilege role ARN and add an iam:PassedToService condition; remove admin from the passable role.",
+            "privescPath": "ci-deployer  ->  ADMIN",
+            "technique": "PassRole+Lambda",
+            "permissions": [
+              "iam:PassRole",
+              "lambda:CreateFunction",
+              "lambda:InvokeFunction"
+            ]
+          }
+        },
+        {
+          "ruleId": "CR-IAM-SELFPOLICY",
+          "ruleIndex": 3,
+          "level": "error",
+          "message": {
+            "text": "Principal 'dev-deployer' has iam:PutUserPolicy enabling technique 'PutUserPolicy': Call iam:PutUserPolicy on user 'self' with an inline document granting {\"Action\":\"*\",\"Resource\":\"*\"}.  [privesc path: dev-deployer  ->  ADMIN]"
+          },
+          "locations": [
+            {
+              "logicalLocations": [
+                {
+                  "name": "dev-deployer",
+                  "fullyQualifiedName": "arn:aws:iam::123456789012:user/dev-deployer",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "severity": "CRITICAL",
+            "remediation": "Remove iam:PutUserPolicy / iam:AttachUserPolicy from the principal; route policy changes through a reviewed pipeline.",
+            "privescPath": "dev-deployer  ->  ADMIN",
+            "technique": "PutUserPolicy",
+            "permissions": [
+              "iam:PutUserPolicy"
+            ]
+          }
+        },
+        {
+          "ruleId": "CR-IAM-SELFPOLICY",
+          "ruleIndex": 3,
+          "level": "error",
+          "message": {
+            "text": "Principal 'support' has iam:AttachUserPolicy enabling technique 'AttachUserPolicy': Call iam:AttachUserPolicy on 'self' attaching arn:aws:iam::aws:policy/AdministratorAccess.  [privesc path: support  ->  ADMIN]"
+          },
+          "locations": [
+            {
+              "logicalLocations": [
+                {
+                  "name": "support",
+                  "fullyQualifiedName": "arn:aws:iam::123456789012:user/support",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "severity": "CRITICAL",
+            "remediation": "Remove iam:PutUserPolicy / iam:AttachUserPolicy from the principal; route policy changes through a reviewed pipeline.",
+            "privescPath": "support  ->  ADMIN",
+            "technique": "AttachUserPolicy",
+            "permissions": [
+              "iam:AttachUserPolicy"
+            ]
+          }
+        },
+        {
+          "ruleId": "CR-IAM-PASSROLE",
+          "ruleIndex": 2,
+          "level": "error",
+          "message": {
+            "text": "Principal 'automation-role' has iam:PassRole, lambda:CreateFunction, lambda:InvokeFunction enabling technique 'PassRole+Lambda': Create a Lambda function with execution role 'lambda-admin-role' (PassRole), then invoke it to run arbitrary code with that role's permissions.  [privesc path: automation-role  ->  ADMIN]"
+          },
+          "locations": [
+            {
+              "logicalLocations": [
+                {
+                  "name": "automation-role",
+                  "fullyQualifiedName": "arn:aws:iam::123456789012:role/automation-role",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "severity": "CRITICAL",
+            "remediation": "Constrain iam:PassRole to a specific, least-privilege role ARN and add an iam:PassedToService condition; remove admin from the passable role.",
+            "privescPath": "automation-role  ->  ADMIN",
+            "technique": "PassRole+Lambda",
+            "permissions": [
+              "iam:PassRole",
+              "lambda:CreateFunction",
+              "lambda:InvokeFunction"
+            ]
+          }
+        },
+        {
+          "ruleId": "CR-IAM-ADMINROLE",
+          "ruleIndex": 4,
+          "level": "error",
+          "message": {
+            "text": "Role 'lambda-admin-role' holds AdministratorAccess (service/instance role with full admin blast radius).  [privesc path: automation-role  ->  ADMIN]"
+          },
+          "locations": [
+            {
+              "logicalLocations": [
+                {
+                  "name": "lambda-admin-role",
+                  "fullyQualifiedName": "arn:aws:iam::123456789012:role/lambda-admin-role",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "severity": "HIGH",
+            "remediation": "Replace AdministratorAccess with a least-privilege policy scoped to exactly what the workload needs.",
+            "privescPath": "automation-role  ->  ADMIN",
+            "technique": "PassRole+Lambda"
+          }
+        },
+        {
+          "ruleId": "CR-IAM-TRUST",
+          "ruleIndex": 5,
+          "level": "warning",
+          "message": {
+            "text": "Role 'automation-role' trust policy permits 'arn:aws:iam::123456789012:role/ec2-app-role' to assume it (lateral-movement vector).  [privesc path: ec2-app-role  ->  automation-role  ->  ADMIN]"
+          },
+          "locations": [
+            {
+              "logicalLocations": [
+                {
+                  "name": "automation-role",
+                  "fullyQualifiedName": "arn:aws:iam::123456789012:role/automation-role",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "severity": "MEDIUM",
+            "remediation": "Restrict the trust policy to the minimal set of principals and add ExternalId / source conditions.",
+            "privescPath": "ec2-app-role  ->  automation-role  ->  ADMIN",
+            "technique": "AssumeRole"
+          }
+        },
+        {
+          "ruleId": "CR-S3-PUBLIC",
+          "ruleIndex": 6,
+          "level": "error",
+          "message": {
+            "text": "S3 bucket 'cloudrange-public-assets' is publicly accessible. Bucket ACL grants READ to AllUsers (public-read) and block-public-access is disabled."
+          },
+          "locations": [
+            {
+              "logicalLocations": [
+                {
+                  "name": "cloudrange-public-assets",
+                  "fullyQualifiedName": "arn:aws:s3:::cloudrange-public-assets",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "severity": "HIGH",
+            "remediation": "Enable S3 Block Public Access (account + bucket), remove public ACL grants, and use a restrictive bucket policy."
+          }
+        },
+        {
+          "ruleId": "CR-S3-NOENC",
+          "ruleIndex": 7,
+          "level": "warning",
+          "message": {
+            "text": "S3 bucket 'cloudrange-public-assets' has no default encryption."
+          },
+          "locations": [
+            {
+              "logicalLocations": [
+                {
+                  "name": "cloudrange-public-assets",
+                  "fullyQualifiedName": "arn:aws:s3:::cloudrange-public-assets",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "severity": "MEDIUM",
+            "remediation": "Enable default SSE-KMS or SSE-S3 encryption."
+          }
+        },
+        {
+          "ruleId": "CR-EC2-IMDSV1",
+          "ruleIndex": 8,
+          "level": "error",
+          "message": {
+            "text": "Instance 'i-0web0server0range' allows token-less IMDSv1; an SSRF or on-host attacker can steal the 'ec2-app-role' role credentials.  [privesc path: ec2-app-role  ->  automation-role  ->  ADMIN]"
+          },
+          "locations": [
+            {
+              "logicalLocations": [
+                {
+                  "name": "i-0web0server0range",
+                  "fullyQualifiedName": "arn:aws:ec2:::instance/i-0web0server0range",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "severity": "HIGH",
+            "remediation": "Require IMDSv2 (HttpTokens=required) and set HttpPutResponseHopLimit=1.",
+            "privescPath": "ec2-app-role  ->  automation-role  ->  ADMIN",
+            "technique": "AssumeRole"
+          }
+        },
+        {
+          "ruleId": "CR-EC2-SECRETS",
+          "ruleIndex": 9,
+          "level": "error",
+          "message": {
+            "text": "Instance 'i-0web0server0range' has plaintext secrets in user-data."
+          },
+          "locations": [
+            {
+              "logicalLocations": [
+                {
+                  "name": "i-0web0server0range",
+                  "fullyQualifiedName": "arn:aws:ec2:::instance/i-0web0server0range",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "severity": "HIGH",
+            "remediation": "Remove secrets from user-data; use SSM Parameter Store / Secrets Manager and an instance role."
+          }
+        },
+        {
+          "ruleId": "CR-LAMBDA-ADMIN",
+          "ruleIndex": 10,
+          "level": "error",
+          "message": {
+            "text": "Lambda 'report-generator' uses admin execution role 'lambda-admin-role'."
+          },
+          "locations": [
+            {
+              "logicalLocations": [
+                {
+                  "name": "report-generator",
+                  "fullyQualifiedName": "arn:aws:lambda:::function/report-generator",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "severity": "HIGH",
+            "remediation": "Scope the execution role to least privilege for this function only."
+          }
+        }
+      ]
+    }
+  ]
+}
