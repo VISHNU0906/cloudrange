@@ -2,7 +2,7 @@
 
 **Cloud attack-and-detect range.** Terraform deploys a deliberately-misconfigured
 AWS environment; a boto3 attack chain automates **IAM privilege-escalation ->
-lateral movement -> S3 data exfiltration**; a read-only auditor maps *every*
+lateral movement -> S3 data exfiltration**; a read-only auditor maps supported
 privesc path and emits **SARIF + Markdown** remediation.
 
 > Offense **and** defense, reproducible via `terraform apply` -- and runnable
@@ -13,7 +13,7 @@ Built by **Vishnu Kosuri** ([github.com/VISHNU0906](https://github.com/VISHNU090
 
 ---
 
-## The depth spine: IAM privilege escalation as graph reachability
+## IAM privilege escalation as graph reachability
 
 The core idea -- the thing worth whiteboarding -- is that **individually-minor
 permissions compose into administrator access**. No single statement says "you
@@ -215,7 +215,7 @@ recommended way to explore the tool.
 
 ---
 
-## Scope & honest limitations
+## Scope and limitations
 
 The policy evaluator models the parts of IAM evaluation that drive
 privilege-escalation reachability, and **deliberately** leaves out (so the
